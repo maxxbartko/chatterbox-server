@@ -22,7 +22,7 @@ var requestHandler = function(request, response) {
           body = JSON.parse(body);
           results.push(body)
         });
-      } else if (request.method === 'GET') {
+      } else if (request.method === 'GET' || request.method === 'OPTIONS') {
         statusCode = 200;
     }
   }
