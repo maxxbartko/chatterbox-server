@@ -1,51 +1,39 @@
 var requestHandler = function(request, response) {
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
+  var statusCode;
   // define request variables
   var { headers, method, url } = request;
 
+  headers = defaultCorsHeaders;
+  headers['Content-Type'] = 'application/json';  
+
   // set conditional request handlers
-  if (request.method === 'POST') {
-    var body = [];
-
-    request.on('error', (err) => {
-      console.error(err);
-    }).on('data', (chunk) => {
-      body.push(chunk);
-    }).on('end', () => {
-      body = Buffer.concat(body).toString();
-      body = JSON.parse(body);
-      messages.push(body);
-      response.end(messages);
-    });
-  
-  } else if (request.method === 'GET') {
-      response.on('error', (err) => {
-          console.error(err);
-      });
-
-    // set response variables
-    var statusCode = 200;
-
-    headers = defaultCorsHeaders;
-
-    headers['Content-Type'] = 'application/json';   //charset=utf-8
-
-    response.writeHead(statusCode, headers);
-    // console.log(response.headers)
-
-    const responseBody = { headers, method, url, body };
-    // const responseBody  = 'hi';
-    response.end(JSON.stringify(messages));
-
-    // if (request.url === '/classes/messages') { // turn into error prompt if false, might be useful later
-    //   console.log('hi');
-    // }
+  if (!request.url.includes('/classes/messages')){
+      statusCode = 404;
+  } else {
+      if (request.method === 'POST') {
+        statusCode = 201;
+        var body = [];
+        request.on('data', (chunk) => {
+          body.push(chunk);
+        }).on('end', () => {
+          body = Buffer.concat(body).toString();
+          body = JSON.parse(body);
+          results.push(body)
+        });
+      } else if (request.method === 'GET') {
+        statusCode = 200;
+    }
   }
+      response.writeHead(statusCode, headers);
+      const responseBody = { headers, method, url, results };
+      response.end(JSON.stringify(responseBody));
+
 
 };
 
-const messages = {results: [{text: 'lol', username: 'me', roomname: 'lobby'}, {text: 'trolol', username: 'me2', roomname: 'lobby'}]}; // create messages that fit data shape to debug GET method; do something similar with POST method
+const results = []; // create messages that fit data shape to debug GET method; do something similar with POST method
 
 const defaultCorsHeaders = {
   'access-control-allow-origin': '*',
