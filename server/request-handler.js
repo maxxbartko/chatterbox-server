@@ -1,49 +1,53 @@
-const results = []; // create messages that fit data shape to debug GET method; do something similar with POST method
-
-const defaultCorsHeaders = {
+const headers = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'access-control-allow-headers': 'content-type, accept',
-  'access-control-max-age': 10 // Seconds.
+  'access-control-max-age': 10, // Seconds.
+  'Content-Type': 'appliction/json'
+};
+
+const sendResponse = function (response, data, statusCode) {
+  statusCode = statusCode || 200;
+  response.writeHead(statusCode, headers);
+  response.end(JSON.stringify(data));
 };
 
 const requestHandler = function(request, response) {
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
-  let statusCode;
   // define request variables
-  let { headers, method, url } = request;
-
-  headers = defaultCorsHeaders;
-  headers['Content-Type'] = 'application/json';  
+  let { method, url } = request;
+  let objectId = 1;
+  const messages = [{ username: 'me', text: 'lol', objectId: objectId }];
 
   // set conditional request handlers
-  if (!request.url.includes('/classes/messages')) {
-    statusCode = 404;
-  } else {
-    if (request.method === 'POST') {
-      statusCode = 201;
-      let body = [];
-      request.on('data', (chunk) => {
-        body.push(chunk);
-      }).on('end', () => {
-        body = Buffer.concat(body).toString();
-        body = JSON.parse(body);
-        results.push(body);
-      });
-    } else if (request.method === 'GET' || request.method === 'OPTIONS') {
-      statusCode = 200;
-    }
+  if (method === 'POST') {
+    let body = [];
+    let objectId = 1;
+    let message = '';
+
+    request.on('data', (chunk) => {
+      body.push(chunk); // chunk is JSON string // need to add createdAt and objectID fields
+      message = JSON.parse(body);
+
+      message.objectId = ++objectId;
+      message.createdAt = new Date();
+    }).on('error', () => {
+      sendResponse(response, null, 404);
+    }).on('end', () => {
+      messages.push(message);
+      sendResponse(response, message, 201);
+    });
+
+  } else if (method === 'GET') {
+    sendResponse(response, {results: messages});
+  } else if (method === 'OPTIONS') {
+    sendResponse(response, null);
   }
-  response.writeHead(statusCode, headers);
-  const responseBody = { headers, method, url, results };
-  response.end(JSON.stringify(responseBody));
-
-
 };
 
 exports.requestHandler = requestHandler;
-exports.defaultCorsHeaders = defaultCorsHeaders;
+exports.headers = headers;
 
 // *** NOTES *** ///
 
@@ -79,13 +83,14 @@ this file and include it in basic-server.js so that it actually works.
 // var statusCode = 200;
 
 // See the note below about CORS headers.
-// var headers = defaultCorsHeaders;
+// var headers = headers;
 
 // Tell the client we are sending them plain text.
 //
 // You will need to change this if you are sending something
 // other than plain text, like JSON or HTML.
 // headers['Content-Type'] = 'application/json';   //charset=utf-8
+
 // .writeHead() writes to the request line and headers of the response,
 // which includes the status and all headers.
 // response.writeHead(statusCode, headers);

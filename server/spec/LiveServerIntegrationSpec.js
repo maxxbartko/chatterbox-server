@@ -9,6 +9,17 @@ describe('server', function() {
     });
   });
 
+  it('should respond to GET requests for /classes/messages with a 200 status code', function (done) {
+    var requestParams = { method: 'OPTIONS',
+      uri: 'http://127.0.0.1:3000/classes/messages',
+    };
+    
+    request(requestParams, function (error, response, body) {
+      expect(response.statusCode).to.equal(200);
+      done();
+    });
+  });
+
   it('should send back parsable stringified JSON', function(done) {
     request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
       expect(JSON.parse.bind(this, body)).to.not.throw();
