@@ -1,3 +1,5 @@
+const messages = [];
+
 const headers = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -17,8 +19,6 @@ const requestHandler = function(request, response) {
 
   // define request variables
   let { method, url } = request;
-  let objectId = 1;
-  const messages = [{ username: 'me', text: 'lol', objectId: objectId }];
 
   // set conditional request handlers
   if (method === 'POST') {
@@ -32,15 +32,19 @@ const requestHandler = function(request, response) {
 
       message.objectId = ++objectId;
       message.createdAt = new Date();
-    }).on('error', () => {
-      sendResponse(response, null, 404);
     }).on('end', () => {
       messages.push(message);
-      sendResponse(response, message, 201);
+      console.log(messages);
+      sendResponse(response, {results: messages}, 201);
     });
 
   } else if (method === 'GET') {
-    sendResponse(response, {results: messages});
+    
+    if (url === '/classes/messages?order=-createdAt') {
+      sendResponse(response, { results: messages });
+    } else {
+      sendResponse(response, null, 404);
+    }
   } else if (method === 'OPTIONS') {
     sendResponse(response, null);
   }
